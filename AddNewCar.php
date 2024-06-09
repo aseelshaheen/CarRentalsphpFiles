@@ -1,35 +1,40 @@
-public void deleteCar(int carID) {
-    // Define the URL of the PHP script
-    String url = "http://yourdomain.com/delete_car.php";
+<?php
+require 'Connection.php';
+$conn = new mysqli($servername, $username, $password, $dbname);
 
-    // Create request queue for Volley
-    RequestQueue requestQueue = Volley.newRequestQueue(this);
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
-    // Create JSON object with the car ID
-    JSONObject jsonCarID = new JSONObject();
-    try {
-        jsonCarID.put("carID", carID);
-    } catch (JSONException e) {
-        e.printStackTrace();
+// Check if POST variables are set and not empty
+if (isset($_POST['carBrand']) && isset($_POST['carModel']) && isset($_POST['price']) && isset($_POST['color']) && isset($_POST['status'])) {
+    $carBrand = $_POST['carBrand'];
+    $carModel = $_POST['carModel'];
+    $price = $_POST['price'];
+    $color = $_POST['color'];
+    $status = $_POST['status'];
+
+    // Prepare and bind
+    $stmt = $conn->prepare("INSERT INTO car (carBrand, carModel, price, color, status) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssiss", $carBrand, $carModel, $price, $color, $status);
+
+    // Execute statement
+    if ($stmt->execute()) {
+        echo "New record created successfully";
+    } else {
+        echo "Error: " . $stmt->error;
     }
 
-    // Create a JSON object request
-    JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonCarID,
-            new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject response) {
-                    // Handle response
-                    Toast.makeText(YourActivity.this, "Car deleted successfully", Toast.LENGTH_SHORT).show();
-                }
-            },
-            new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    // Handle error
-                    Toast.makeText(YourActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
-
-    // Add the request to the request queue
-    requestQueue.add(jsonObjectRequest);
+    $stmt->close();
+} else {
+    echo "Missing required POST data<br>";
+    echo "carBrand: " . (isset($_POST['carBrand']) ? $_POST['carBrand'] : 'NOT SET') . "<br>";
+    echo "carModel: " . (isset($_POST['carModel']) ? $_POST['carModel'] : 'NOT SET') . "<br>";
+    echo "price: " . (isset($_POST['price']) ? $_POST['price'] : 'NOT SET') . "<br>";
+    echo "color: " . (isset($_POST['color']) ? $_POST['color'] : 'NOT SET') . "<br>";
+    echo "status: " . (isset($_POST['status']) ? $_POST['status'] : 'NOT SET') . "<br>";
 }
+
+$conn->close();
+?>
